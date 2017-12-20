@@ -25,9 +25,12 @@
 #include <Arduino.h>
 #endif
 
-
 // maximum bytes that can be written by one write command
+#if !defined(EA_EPD)
 #define EPD_FLASH_PAGE_SIZE 128
+#else
+#define EDP_FLASH_PAGE_SIZE 256
+#endif
 
 // to shift sector number (0..EPD_FLASH_SECTOR_COUNT) to an address for erase
 #define EPD_FLASH_SECTOR_SHIFT 12
@@ -36,47 +39,60 @@
 #define EPD_FLASH_SECTOR_SIZE 4096
 
 // total available sectors
+#if !defined(EA_EPD)
 #define EPD_FLASH_SECTOR_COUNT 256
-
-
-class EPD_FLASH_Class {
-private:
-	uint8_t EPD_FLASH_CS;
-
-	void spi_setup(void);
-	void spi_teardown(void);
-	bool is_busy(void);
-	void wait_for_ready(void);
-	EPD_FLASH_Class(const EPD_FLASH_Class &f);  // prevent copy
-
-public:
-	bool available(void);
-	void info(uint8_t *maufacturer, uint16_t *device);
-	void read(void *buffer, uint32_t address, uint16_t length);
-	void write_enable(void);
-	void write_disable(void);
-	void write(uint32_t address, const void *buffer, uint16_t length);
-
-	// Arduino has separate memory spaces, but MSP430, ARM do not
-#if !defined(__AVR__)
-	// just alias the function name
-	inline void write_from_progmem(uint32_t address, const void *buffer, uint16_t length) {
-		this->write(address, buffer, length);
-	}
 #else
-	void write_from_progmem(uint32_t address, PROGMEM const void *buffer, uint16_t length);
+#define EDP_FLASH_SECTOR_COUNT 1024
 #endif
 
-	void sector_erase(uint32_t address);
+#if !defined(EA_EPD)
+// currently supported chip
+#define EPD_FLASH_MFG 0xc2
+#define EPD_FLASH_ID 0x2014
+#else
+#define EPD_FLASH_MFG 0xef   // Winbond
+#define EPD_FLASH_ID 0x4016  // W25Q32
+#endif
 
-	// inline static void attachInterrupt();
-	// inline static void detachInterrupt();
+class EPD_FLASH_Class {
+ private:
+  uint8_t EPD_FLASH_CS;
 
-	void begin(uint8_t chip_select_pin);
-	void end(void);
+  void spi_setup(void);
+  void spi_teardown(void);
+  bool is_busy(void);
+  void wait_for_ready(void);
+  EPD_FLASH_Class(const EPD_FLASH_Class &f);  // prevent copy
 
-	EPD_FLASH_Class(uint8_t chip_select_pin);
+ public:
+  bool available(void);
+  void info(uint8_t *maufacturer, uint16_t *device);
+  void read(void *buffer, uint32_t address, uint16_t length);
+  void write_enable(void);
+  void write_disable(void);
+  void write(uint32_t address, const void *buffer, uint16_t length);
 
+// Arduino has separate memory spaces, but MSP430, ARM do not
+#if !defined(__AVR__)
+  // just alias the function name
+  inline void write_from_progmem(uint32_t address, const void *buffer,
+                                 uint16_t length) {
+    this->write(address, buffer, length);
+  }
+#else
+  void write_from_progmem(uint32_t address, PROGMEM const void *buffer,
+                          uint16_t length);
+#endif
+
+  void sector_erase(uint32_t address);
+
+  // inline static void attachInterrupt();
+  // inline static void detachInterrupt();
+
+  void begin(uint8_t chip_select_pin);
+  void end(void);
+
+  EPD_FLASH_Class(uint8_t chip_select_pin);
 };
 
 extern EPD_FLASH_Class EPD_FLASH;

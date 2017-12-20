@@ -25,26 +25,26 @@
 #include <Arduino.h>
 #endif
 
+#include <TemperatureSensor.h>
 
-class S5813A_Class {
-private:
-	uint8_t temperature_pin;
+class S5813A_Class : public TemperatureSensor {
+ private:
+  uint8_t temperature_pin;
 
-	S5813A_Class(const S5813A_Class &f);  // prevent copy
+  S5813A_Class(const S5813A_Class &f);  // prevent copy
 
-public:
-	int read(void);
-	long readVoltage(void);  // returns micro volts
+ public:
+  int read(void);
+  long readVoltage(void);  // returns micro volts
 
-	// inline static void attachInterrupt();
-	// inline static void detachInterrupt();
+  // inline static void attachInterrupt();
+  // inline static void detachInterrupt();
 
-	// allow external program to configure actual analog pin to use
-	void begin(uint8_t input_pin);
-	void end(void);
+  // allow external program to configure actual analog pin to use
+  void begin(uint8_t input_pin);
+  void end(void);
 
-	S5813A_Class(uint8_t input_pin);
-
+  S5813A_Class(uint8_t input_pin);
 };
 
 extern S5813A_Class S5813A;

@@ -15,7 +15,7 @@
 #if !defined(EPD_PINOUT_ARDUINO_H)
 #define EPD_PINOUT_ARDUINO_H 1
 
-
+#if !defined(EA_EPD)
 // Arduino IO layout
 const int Pin_TEMPERATURE = A0;
 const int Pin_PANEL_ON = 2;
@@ -30,6 +30,16 @@ const int Pin_EPD_CS = 8;
 const int Pin_EPD_FLASH_CS = 9;
 const int Pin_SW2 = 12;
 const int Pin_RED_LED = 13;
-
+#else
+const int Pin_PANEL_ON = 5;
+const int Pin_BORDER = 10;
+const int Pin_DISCHARGE = 4;
+const int Pin_RESET = 6;
+const int Pin_BUSY = 7;
+const int Pin_EPD_CS = 8;
+const int Pin_EPD_FLASH_CS = 9;
+const int Pin_SW2 = 12;
+const int Pin_RED_LED = 13;
+#endif
 
 #endif

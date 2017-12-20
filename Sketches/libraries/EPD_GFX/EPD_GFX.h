@@ -17,90 +17,85 @@
 
 // assumes the correct EPD_Vvvv_Gg.h has already been included
 
-#include <Arduino.h>
 #include <Adafruit_GFX.h>
+#include <Arduino.h>
 
+#include <TemperatureSensor.h>
 
 class EPD_GFX : public Adafruit_GFX {
+ private:
+  EPD_Class &EPD;
+  TemperatureSensor &temperature_sensor;
 
-private:
-	EPD_Class &EPD;
-	S5813A_Class &S5813A;
-
-	// FIXME: Make width/height parameters
-	// FIXME: Have to change these constants to suit panel (128 x 96, 200 x 96, 264 x 176)
-	static const int pixel_width = EPD_PIXEL_WIDTH;  // must be a multiple of 8
-	static const int pixel_height = EPD_PIXEL_HEIGHT;
+  // FIXME: Make width/height parameters
+  // FIXME: Have to change these constants to suit panel (128 x 96, 200 x 96,
+  // 264 x 176)
+  static const int pixel_width = EPD_PIXEL_WIDTH;  // must be a multiple of 8
+  static const int pixel_height = EPD_PIXEL_HEIGHT;
 
 #if EPD_IMAGE_TWO_ARG
-	uint8_t old_image[(uint32_t)(pixel_width) * (uint32_t)(pixel_height) / 8];
+  uint8_t old_image[(uint32_t)(pixel_width) * (uint32_t)(pixel_height) / 8];
 #endif
-	uint8_t new_image[(uint32_t)(pixel_width) * (uint32_t)(pixel_height) / 8];
+  uint8_t new_image[(uint32_t)(pixel_width) * (uint32_t)(pixel_height) / 8];
 
-	EPD_GFX(EPD_Class&);  // disable copy constructor
+  EPD_GFX(EPD_Class &);  // disable copy constructor
 
-public:
+ public:
+  enum { WHITE = 0, BLACK = 1 };
 
-	enum {
-		WHITE = 0,
-		BLACK = 1
-	};
+  // constructor
+  EPD_GFX(EPD_Class &epd, TemperatureSensor &ts)
+      : Adafruit_GFX(this->pixel_width, this->pixel_height),
+        EPD(epd),
+        temperature_sensor(ts) {}
 
-	// constructor
-	EPD_GFX(EPD_Class &epd, S5813A_Class &s5813a) :
-	Adafruit_GFX(this->pixel_width, this->pixel_height),
-		EPD(epd), S5813A(s5813a) {
-	}
+  void begin(void) {
+    int temperature = this->temperature_sensor.read();
 
-	void begin(void) {
-		int temperature = this->S5813A.read();
+    // erase display
+    this->EPD.begin();
+    this->EPD.setFactor(temperature);
+    this->EPD.clear();
+    this->EPD.end();
 
-		// erase display
-		this->EPD.begin();
-		this->EPD.setFactor(temperature);
-		this->EPD.clear();
-		this->EPD.end();
-
-		// clear buffers to white
+// clear buffers to white
 #if EPD_IMAGE_TWO_ARG
-		memset(this->old_image, 0, sizeof(this->old_image));
+    memset(this->old_image, 0, sizeof(this->old_image));
 #endif
-		memset(this->new_image, 0, sizeof(this->new_image));
-	}
+    memset(this->new_image, 0, sizeof(this->new_image));
+  }
 
-	void end(void){
-	}
+  void end(void) {}
 
-	// set a single pixel in new_image
-	void drawPixel(int16_t x, int16_t y, uint16_t colour) {
-		if (x < 0 || x >= this->pixel_width || y < 0 || y >= this->pixel_height) {
-			return; // avoid buffer overwrite
-		}
-		int bit = x & 0x07;
-		int byte = x / 8 + y * (pixel_width / 8);
-		int mask = 0x01 << bit;
-		if (BLACK == colour) {
-			this->new_image[byte] |= mask;
-		} else {
-			this->new_image[byte] &= ~mask;
-		}
-	}
+  // set a single pixel in new_image
+  void drawPixel(int16_t x, int16_t y, uint16_t colour) {
+    if (x < 0 || x >= this->pixel_width || y < 0 || y >= this->pixel_height) {
+      return;  // avoid buffer overwrite
+    }
+    int bit = x & 0x07;
+    int byte = x / 8 + y * (pixel_width / 8);
+    int mask = 0x01 << bit;
+    if (BLACK == colour) {
+      this->new_image[byte] |= mask;
+    } else {
+      this->new_image[byte] &= ~mask;
+    }
+  }
 
-	// refresh the display: change from current image to new image
-	void display(void) {
+  // refresh the display: change from current image to new image
+  void display(void) {
+    int temperature = this->temperature_sensor.read();
 
-		int temperature = this->S5813A.read();
-
-		// erase old, display new
-		this->EPD.begin();
-		this->EPD.setFactor(temperature);
+    // erase old, display new
+    this->EPD.begin();
+    this->EPD.setFactor(temperature);
 
 #if defined(EPD_ENABLE_EXTRA_SRAM)
 
 #if EPD_IMAGE_ONE_ARG
-		this->EPD.image_sram(this->image);
+    this->EPD.image_sram(this->new_image);
 #elif EPD_IMAGE_TWO_ARG
-		this->EPD.image_sram(this->old_image, this->new_image);
+    this->EPD.image_sram(this->old_image, this->new_image);
 #else
 #error "unsupported image function"
 #endif
@@ -108,14 +103,13 @@ public:
 #else
 #error EPD_GFX - Needs more RAM: EPD_ENABLE_EXTRA_SRAM
 #endif
-		this->EPD.end();
+    this->EPD.end();
 
 #if EPD_IMAGE_TWO_ARG
-		// copy new over to old
-		memcpy(this->old_image, this->new_image, sizeof(this->old_image));
+    // copy new over to old
+    memcpy(this->old_image, this->new_image, sizeof(this->old_image));
 #endif
-	}
+  }
 };
-
 
 #endif

@@ -60,6 +60,14 @@ Updated 2015-08-01 by Rei Vilo
 * The master supports MSP432 but not with direct connection as Energia startup code allocates
   one pin as not GPIO
 
+## Notes for the Embedded Artists support (December 2017)
+
+Rather than starting from the EmbeddedArtists old repo, support for their panel
+has been added in this fork.
+
+* To compile, the flag `-DEA_EDP` needs to be used
+* Rather and Arduino IDE, the examples for the EA EPD are using platformio: demos are in the `apps` directory.
+
 ## Sketches
 
 These are example programs that will compile and run on the following platforms
